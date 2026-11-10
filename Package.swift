@@ -27,7 +27,7 @@ let package = Package(
         .binaryTarget(
             name: "CloudXAppHarbrConnector",
             url: "https://github.com/cloudx-io/cloudx-ios-swift-package-connector-appharbr/releases/download/binary/1380300.0.0/CloudXAppHarbrConnector.xcframework.zip",
-            checksum: "SET_FROM_ZIP_AT_PUBLIC_TAG"
+            checksum: "75048ecf9e451a6f20d49cb8d131903681a63fdd819116fccde1e8ac92c257c1"
         ),
         .target(
             name: "CloudXAppHarbrConnectorPackage",
