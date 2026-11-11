@@ -1,0 +1,43 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 16
+        run: sudo xcode-select --switch /Applications/Xcode_16.4.app
+      - name: Validate manifest
+        run: swift package dump-package
+      - name: Resolve dependencies
+        run: swift package resolve
+      - name: Build and test iOS consumers
+        run: |
+          destination=$(xcrun simctl list devices available --json | \
+            jq -r '[.devices | to_entries[] | select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")) | .value[] | select(.isAvailable)][0].udid // empty')
+          if [[ -n "$destination" ]]; then
+            xcodebuild test \
+              -scheme CloudXAppHarbrConnector \
+              -destination "id=$destination" \
+              CODE_SIGNING_ALLOWED=NO
+          else
+            xcodebuild build-for-testing \
+              -scheme CloudXAppHarbrConnector \
+              -destination 'generic/platform=iOS Simulator' \
+              CODE_SIGNING_ALLOWED=NO
+          fi
+      - name: Verify artifact checksum
+        run: |
+          curl --fail --location --output /tmp/CloudXAppHarbrConnector.xcframework.zip \
+            https://github.com/cloudx-io/cloudx-ios-swift-package-connector-appharbr/releases/download/binary/1380300.0.0/CloudXAppHarbrConnector.xcframework.zip
+          test "$(swift package compute-checksum /tmp/CloudXAppHarbrConnector.xcframework.zip)" = \
+            "75048ecf9e451a6f20d49cb8d131903681a63fdd819116fccde1e8ac92c257c1"
